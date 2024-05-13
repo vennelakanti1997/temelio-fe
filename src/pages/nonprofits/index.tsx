@@ -30,9 +30,8 @@ import { EmailsList } from "../sentEmails/index.tsx";
 import { SignUpAndSignInForm } from "../createFoundation/signUpAndSignInForm";
 import NavBar from "@/components/ui/navbar";
 import IndeterminateCheckbox from "@/components/ui/indeterminateCheckbox.tsx";
-import { error } from "console";
 
-type NonProfits = {
+type NonProfitsType = {
   id: string;
   email: string;
   address: string;
@@ -60,8 +59,8 @@ const NonProfits: React.FC<{
   isModal: boolean;
   open: boolean;
   handleClose: () => void;
-  templateId?:string;
-  setTemplateId?:()=>void;
+  templateId?: string;
+  setTemplateId: () => void;
 }> = (props) => {
   const [searchParams] = useSearchParams();
 
@@ -72,11 +71,10 @@ const NonProfits: React.FC<{
     {}
   );
 
-  const [nonProfits, setNonProfits] = useState<Array<NonProfits>>([]);
+  const [nonProfits, setNonProfits] = useState<Array<NonProfitsType>>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
-  
 
-  const nonProfitsList = useQuery<Array<NonProfits>, Error>({
+  const nonProfitsList = useQuery<Array<NonProfitsType>, Error>({
     queryKey: ["fetchNonProfits", foundationId],
     queryFn: () =>
       Axios.get(constructUrl(GET_APIS.NON_PROFITS, [foundationId]), {
@@ -89,9 +87,9 @@ const NonProfits: React.FC<{
     refetchOnMount: true,
   });
   const [sentEmailsList, setsentEmailsList] = useState<SentEmailList>({});
-  const deleteNonProfit = useMutation<NonProfits, Error, string>({
+  const deleteNonProfit = useMutation<NonProfitsType, Error, string>({
     mutationKey: ["deleteNonProfit"],
-    mutationFn: (id: string): Promise<NonProfits> =>
+    mutationFn: (id: string): Promise<NonProfitsType> =>
       Axios.delete(constructUrl(DELETE_APIS.NON_PROFIT, [foundationId]), {
         params: { id },
       }),
@@ -103,7 +101,7 @@ const NonProfits: React.FC<{
     onError: (err) => toast.error(err.message || "Failed to delete"),
   });
 
-  const selectColumns: ColumnDef<NonProfits>[] = [
+  const selectColumns: ColumnDef<NonProfitsType>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -128,7 +126,7 @@ const NonProfits: React.FC<{
       ),
     },
   ];
-  const columns: ColumnDef<NonProfits>[] = [
+  const columns: ColumnDef<NonProfitsType>[] = [
     {
       accessorKey: "name",
       header: ({ column }) => (
@@ -172,7 +170,7 @@ const NonProfits: React.FC<{
     },
   ];
 
-  const actionColumns: ColumnDef<NonProfits>[] = [
+  const actionColumns: ColumnDef<NonProfitsType>[] = [
     {
       id: "actions",
       cell: ({ row }) => {
@@ -273,15 +271,20 @@ const NonProfits: React.FC<{
             type="submit"
             onClick={() => {
               const nonprofitIds = Object.keys(rowSelection).map(
-                (key) => nonProfitsList.data[key].id
+                (key: string) => {
+                  const nonprofitIndex = parseInt(key);
+                  const nonprofit = nonProfitsList.data?.[nonprofitIndex];
+                  return nonprofit ? nonprofit.id : null;
+                }
               );
-              console.log(nonprofitIds);
+
               Axios.post(constructUrl(POST_APIS.SEND_EMAILS, [foundationId]), {
                 templateId: props.templateId,
                 nonProfitIds: nonprofitIds,
               })
                 .then(() => {
                   props.setTemplateId();
+
                   toast.success("Emails Sent");
                   props.handleClose();
                 })

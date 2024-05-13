@@ -15,6 +15,7 @@ const router = createBrowserRouter([
         isModal={false}
         open={false}
         handleClose={() => console.log("no-op")}
+        setTemplateId={() => console.log("no-op")}
       />
     ),
   },
